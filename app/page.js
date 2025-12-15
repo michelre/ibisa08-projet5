@@ -1,66 +1,71 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import recipes from "../recipes.json";
+import RecipeCard from "./components/RecipeCard";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <header className="hero">
+        <div className="hero__overlay">
+          <div className="hero__topbar">
+            <div className="hero__logo">
+              <img src="/logo-les-petits-plats.svg" alt="Les Petits Plats" />
+            </div>
+          </div>
+
+          <div className="hero__content">
+            <h1 className="hero__headline">
+              Découvrez nos recettes du quotidien, simples et délicieuses
+            </h1>
+
+            <form className="hero__search" action="#" role="search">
+              <input
+                type="text"
+                placeholder="Rechercher une recette, un ingrédient..."
+                aria-label="Rechercher une recette"
+              />
+              {/* Pas de submit tant que la recherche n'est pas implémentée */}
+              <button type="button" aria-label="Rechercher">
+                <img
+                  src="/icon-search.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="hero__search-icon"
+                />
+              </button>
+            </form>
+          </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="page">
+        <section className="filters-bar">
+          <div className="filters-bar__left">
+            <select className="filters-bar__select" aria-label="Ingrédients">
+              <option>Ingrédients</option>
+            </select>
+            <select className="filters-bar__select" aria-label="Appareils">
+              <option>Appareils</option>
+            </select>
+            <select className="filters-bar__select" aria-label="Ustensiles">
+              <option>Ustensiles</option>
+            </select>
+          </div>
+
+          <div className="filters-bar__right">
+            <span className="filters-bar__count">{recipes.length} recettes</span>
+          </div>
+        </section>
+
+        <section className="recipes-grid">
+          {recipes.map((recipe) => (
+            <RecipeCard key={recipe.id ?? recipe.name} recipe={recipe} />
+          ))}
+        </section>
       </main>
-    </div>
+
+      <footer className="site-footer">
+        <p>Copyright © 2025 - Les Petits Plats</p>
+      </footer>
+    </>
   );
 }
