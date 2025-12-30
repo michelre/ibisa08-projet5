@@ -122,14 +122,21 @@ a {
 
 .recipe-card__content {
   display: flex;
-  flex-direction: column;
+  flex-direction: column !important; /* force layout maquette */
   gap: 24px;
   flex: 1;
 }
 
-
 .recipe-card__col {
+  width: 100%;
   min-width: 0;
+}
+
+/* Force align left (évite l’effet “centré”) */
+.recipe-card__body,
+.recipe-card__section-title,
+.recipe-card__description {
+  text-align: left;
 }
 
 .recipe-card__section-title {
@@ -146,6 +153,10 @@ a {
   line-height: 1.5;
   color: #1f2937;
   overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8; 
+  text-align: left;
 }
 
 .recipe-card__ingredients {
@@ -181,6 +192,12 @@ a {
 
 .recipe-card__ingredient-qty:empty {
   display: none;
+}
+
+.recipe-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Hero */
@@ -361,6 +378,150 @@ a {
   font-weight: 700;
   color: #000000;
   padding-top: 14px;
+}
+
+/* Dropdown Select (maquette) */
+.select {
+  position: relative;
+  width: 195px;
+}
+
+.select__button {
+  width: 100%;
+  height: 56px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.select__label {
+  font-size: 14px;
+}
+
+.select__chevron {
+  display: inline-flex;
+  transition: transform 0.15s ease;
+}
+
+.select__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.select__panel {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 11px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  z-index: 50;
+}
+
+.select__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0 34px 0 12px;
+}
+
+.select__search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  background: transparent;
+}
+
+.select__searchIcon {
+  position: absolute;
+  right: 10px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.select__clear {
+  position: absolute;
+  right: 34px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.select__list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.select__item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.select__item:hover {
+  background: #f3f4f6;
+}
+
+.select__item.is-selected {
+  background: #ffd15b;
+}
+
+/* Tags (pill + croix) */
+.tags-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffd15b;
+  border-radius: 11px;
+  padding: 10px 12px 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.tag__remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: #000000;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Footer */

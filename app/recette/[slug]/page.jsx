@@ -1,108 +1,167 @@
-import recipes from "../../../recipes.json";
-import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import styles from "./RecipeDetail.module.css";
 
-function getRecipeImageSrc(recipe) {
-  if (recipe?.image) return `/recipes/${recipe.image}`;
-  return "/hero-bg.jpg";
+import recipesData from "../../../recipes.json";
+
+// Selon la config/build, l'import JSON peut être wrap dans `default`
+const RECIPES_SOURCE = recipesData?.default ?? recipesData;
+
+const RECIPES = Array.isArray(RECIPES_SOURCE)
+  ? RECIPES_SOURCE
+  : Array.isArray(RECIPES_SOURCE?.recipes)
+    ? RECIPES_SOURCE.recipes
+    : [];
+
+function formatTime(minutes) {
+  if (!minutes || minutes <= 0) return "—";
+  return `${minutes}min`;
 }
 
-function formatQty(it) {
-  const qty = it?.quantity;
-  const unit = it?.unit;
-  if (qty == null || qty === "") return "";
-  return `${qty}${unit ? ` ${unit}` : ""}`;
+function formatQty(q) {
+  if (q === undefined || q === null || q === "") return "";
+  return String(q);
 }
 
-// (Optionnel mais utile si output export)
-export function generateStaticParams() {
-  return recipes
-    .filter((r) => r?.id && r?.slug)
-    .map((r) => ({ slug: `${r.id}-${r.slug}` }));
+function getUnit(ing) {
+  return ing?.unit || ing?.unite || "";
 }
 
-export default async function RecipePage({ params }) {
-  // Next.js 15/16: `params` peut être une Promise selon la config
-  const resolvedParams =
-    params && typeof params.then === "function" ? await params : params;
-
-  const raw = decodeURIComponent(String(resolvedParams?.slug || ""))
+function slugify(str) {
+  return String(str)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
     .trim()
-    .toLowerCase();
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
-  // Attend "1-limonade-de-coco"
-  const match = raw.match(/^(\d+)-(.+)$/);
-  const idFromUrl = match ? Number(match[1]) : null;
-  const slugFromUrl = (match ? match[2] : raw).trim().toLowerCase();
+function getRecipeId(r) {
+  return r?.id ?? r?.ID ?? r?.recipeId ?? r?.idRecipe;
+}
 
-  const recipe =
-    (idFromUrl != null ? recipes.find((r) => Number(r.id) === idFromUrl) : null) ||
-    recipes.find((r) => String(r.slug).trim().toLowerCase() === slugFromUrl);
+function getRecipeName(r) {
+  return r?.name ?? r?.title ?? r?.nom;
+}
 
-  if (!recipe) return notFound();
+export default async function RecipeDetailPage({ params }) {
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug ?? "";
+  const slugStr = Array.isArray(slug) ? slug.join("/") : String(slug);
+
+  // 1) Match direct sur le champ `slug`
+  let recipe = RECIPES.find((r) => r?.slug === slugStr);
+
+  // 2) Match par id si l'URL commence par un nombre (ex: "2-poisson-cru-a-la-tahitienne")
+  if (!recipe) {
+    const id = parseInt(slugStr, 10);
+    if (!Number.isNaN(id)) {
+      recipe = RECIPES.find((r) => Number(getRecipeId(r)) === id);
+    }
+  }
+
+  // 3) Fallback : slugify(name)
+  if (!recipe) {
+    const slugNoId = slugStr.replace(/^\d+-/, "");
+    recipe = RECIPES.find((r) => {
+      const n = getRecipeName(r);
+      if (!n) return false;
+      const s = slugify(n);
+      return s === slugStr || s === slugNoId;
+    });
+  }
+
+  if (!recipe) {
+    notFound();
+  }
 
   return (
-    <>
-      <header className="hero hero--compact">
-        <div className="hero__overlay">
-          <div className="hero__topbar">
-            <div className="hero__logo">
-              <img src="/logo-les-petits-plats.svg" alt="Les Petits Plats" />
-            </div>
-          </div>
+    <div className={styles.page}>
+      <header className={styles.hero}>
+        <div className={styles.heroInner}>
+          <Link href="/" aria-label="Retour à l'accueil" className={styles.brand}>
+            <Image
+              src="/logo-les-petits-plats.svg"
+              alt="Les Petits Plats"
+              width={190}
+              height={26}
+              className={styles.brandLogo}
+              priority
+            />
+          </Link>
         </div>
       </header>
 
-      <main className="page">
-        <Link href="/" style={{ display: "inline-block", marginBottom: 16 }}>
-          ← Retour
-        </Link>
+      <main className={styles.container}>
+        <section className={styles.card}>
+          <div className={styles.left}>
+            <div className={styles.imageFrame}>
+              <Image
+                src={`/recipes/${recipe.image}`}
+                alt={recipe.name}
+                width={520}
+                height={520}
+                className={styles.recipeImage}
+                priority
+              />
+            </div>
+          </div>
 
-        <h1 style={{ marginBottom: 16 }}>{recipe.name}</h1>
+          <div className={styles.right}>
+            <h1 className={styles.title}>{recipe.name}</h1>
 
-        <img
-          src={getRecipeImageSrc(recipe)}
-          alt={recipe.name}
-          style={{
-            width: "420px",
-            maxWidth: "100%",
-            borderRadius: "16px",
-            display: "block",
-            marginBottom: "24px",
-          }}
-        />
+            <div className={styles.metaBlock}>
+              <div className={styles.metaLabel}>TEMPS DE PRÉPARATION</div>
+              <div className={styles.timePill}>{formatTime(recipe.time)}</div>
+            </div>
 
-        <p style={{ marginBottom: 16 }}>
-          <strong>Temps :</strong> {recipe.time} min
-        </p>
+            <div className={styles.section}>
+              <div className={styles.sectionLabel}>INGRÉDIENTS</div>
+              <div className={styles.ingredientsGrid}>
+                {recipe.ingredients.map((ing, idx) => (
+                  <div key={idx} className={styles.ingredientRow}>
+                    <div className={styles.ingredientName}>{ing.ingredient}</div>
+                    {(ing.quantity || ing.quantity === 0 || getUnit(ing)) && (
+                      <div className={styles.ingredientQty}>
+                        {formatQty(ing.quantity)} {getUnit(ing)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-        <h2>Ingrédients</h2>
-        <ul>
-          {(recipe.ingredients || []).map((it, idx) => (
-            <li key={idx}>
-              {it.ingredient}
-              {formatQty(it) ? ` — ${formatQty(it)}` : ""}
-            </li>
-          ))}
-        </ul>
+            <div className={styles.section}>
+              <div className={styles.sectionLabel}>USTENSILES NÉCESSAIRES</div>
+              <div className={styles.simpleList}>
+                {recipe.ustensils?.length ? recipe.ustensils.join(", ") : "—"}
+              </div>
+            </div>
 
-        <h2 style={{ marginTop: 24 }}>Ustensiles</h2>
-        <ul>
-          {(recipe.ustensils || []).map((u, idx) => (
-            <li key={idx}>{u}</li>
-          ))}
-        </ul>
+            <div className={styles.section}>
+              <div className={styles.sectionLabel}>APPAREILS NÉCESSAIRES</div>
+              <div className={styles.simpleList}>{recipe.appliance || "—"}</div>
+            </div>
 
-        <h2 style={{ marginTop: 24 }}>Appareil</h2>
-        <p>{recipe.appliance || "-"}</p>
-
-        <h2 style={{ marginTop: 24 }}>Recette</h2>
-        <p>{recipe.description}</p>
+            <div className={styles.section}>
+              <div className={styles.sectionLabel}>RECETTE</div>
+              <ol className={styles.steps}>
+                {recipe.description
+                  .split(".")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((step, i) => (
+                    <li key={i}>{step}.</li>
+                  ))}
+              </ol>
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer className="site-footer">
-        <p>Copyright © 2025 - Les Petits Plats</p>
-      </footer>
-    </>
+      <footer className={styles.footer}>Copyright © 2025 - Les Petits Plats</footer>
+    </div>
   );
 }
