@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import recipes from "../recipes.json";
 import RecipeCard from "./components/RecipeCard";
 import Select from "./components/Select";
@@ -8,28 +8,20 @@ import Tag from "./components/Tag";
 
 export default function Home() {
   const [allRecipes, setAllRecipes] = useState(recipes);
+  const [ingredients, setIngredients] = useState([]);
+  const [appareils, setAppareils] = useState([]);
+  const [ustensils, setUstensils] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [selectedAppareils, setSelectedAppareils] = useState([]);
   const [selectedUstensils, setSelectedUstensils] = useState([]);
+  const [query, setQuery] = useState('')
 
-  const ingredients = Array.from(
-    new Set(
-      recipes
-        .map((r) => r.ingredients)
-        .flat()
-        .map((i) => i.ingredient)
-    )
-  ).map((ingredient, index) => ({ id: `ingredient-${index}`, label: ingredient }));
-
-  const appareils = Array.from(new Set(recipes.map((r) => r.appliance))).map((appliance, index) => ({
-    id: `appliance-${index}`,
-    label: appliance,
-  }));
-
-  const ustensils = Array.from(new Set(recipes.map((r) => r.ustensils).flat())).map((ustensil, index) => ({
-    id: `ustensil-${index}`,
-    label: ustensil,
-  }));
+  useEffect(() => {    
+    updateIngredients(recipes)
+    updateAppareils(recipes)
+    updateUstensils(recipes)
+    
+  }, [])
 
   const filterByIngredients = (list) => {
     if (list.length === 0) return recipes;
@@ -38,6 +30,34 @@ export default function Home() {
       return list.every((x) => recipeIngredients.includes(x));
     });
   };
+
+  const updateIngredients = (recipes) => {
+    const allIngredients = Array.from(
+    new Set(
+      recipes
+        .map((r) => r.ingredients)
+        .flat()
+        .map((i) => i.ingredient)
+      )
+    ).map((ingredient, index) => ({ id: `ingredient-${index}`, label: ingredient }))
+    setIngredients(allIngredients)
+  }
+
+  const updateAppareils = (recipes) => {
+    const allAppareils = Array.from(new Set(recipes.map((r) => r.appliance))).map((appliance, index) => ({
+        id: `appliance-${index}`,
+        label: appliance,
+      }));
+    setAppareils(allAppareils)
+  }
+
+  const updateUstensils = (recipes) => {
+    const allUstensils = Array.from(new Set(recipes.map((r) => r.ustensils).flat())).map((ustensil, index) => ({
+      id: `ustensil-${index}`,
+      label: ustensil,
+    }));
+    setUstensils(allUstensils)
+  }
 
   const filterByAppareils = (list) => {
     if (list.length === 0) return recipes;
@@ -49,19 +69,35 @@ export default function Home() {
     return recipes.filter((recipe) => list.every((x) => recipe.ustensils.includes(x)));
   };
 
+  const filterByQuery = () => {
+    if (query.length < 3){
+      return recipes
+    }
+
+    return recipes.filter((recipe) => 
+      recipe.name.toLowerCase().includes(query.toLocaleLowerCase()) ||
+      recipe.description.toLowerCase().includes(query.toLocaleLowerCase()) ||
+      recipe.ingredients.map(i => i.ingredient).filter(i => i.toLocaleLowerCase() === query.toLocaleLowerCase()).length > 0
+    )
+  }
+
   const filterRecipes = (
     ing = selectedIngredients,
     ust = selectedUstensils,
-    app = selectedAppareils
+    app = selectedAppareils,    
   ) => {
     const idsI = filterByIngredients(ing).map((r) => r.id);
     const idsU = filterByUstensils(ust).map((r) => r.id);
     const idsA = filterByAppareils(app).map((r) => r.id);
+    const idsQuery = filterByQuery().map((r) => r.id);
 
-    const intersectionIds = idsI.filter((id) => idsU.includes(id) && idsA.includes(id));
+    const intersectionIds = idsI.filter((id) => idsU.includes(id) && idsA.includes(id) && idsQuery.includes(id));
     const nextAll = intersectionIds.map((id) => recipes.find((r) => r.id === id)).filter(Boolean);
 
     setAllRecipes(nextAll);
+    updateIngredients(nextAll)
+    updateAppareils(nextAll)
+    updateUstensils(nextAll)
   };
 
   const onSelectIngredient = (value) => {
@@ -84,6 +120,11 @@ export default function Home() {
     setSelectedUstensils(next);
     filterRecipes(selectedIngredients, next, selectedAppareils);
   };
+
+  const onSearch = (e) => {
+    e.preventDefault()
+    filterRecipes(selectedIngredients, selectedUstensils, selectedAppareils)
+  }
 
   // Suppression via croix
   const removeIngredient = (label) => {
@@ -119,18 +160,20 @@ export default function Home() {
               Découvrez nos recettes du quotidien, simples et délicieuses
             </h1>
 
-            <form className="hero__search" action="#" role="search">
+            <form className="hero__search" action="#" role="search" onSubmit={onSearch}>
               <input
                 type="text"
                 placeholder="Rechercher une recette, un ingrédient..."
                 aria-label="Rechercher une recette"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
               />
               <button type="button" aria-label="Rechercher">
                 <img
                   src="/icon-search.svg"
                   alt=""
                   aria-hidden="true"
-                  className="hero__search-icon"
+                  className="hero__search-icon"                  
                 />
               </button>
             </form>
